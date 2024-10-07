@@ -1,0 +1,33 @@
+name: "Install PS Modules"
+description: "Installs PowerShell modules and versions. Uses caching to increase reliability"
+
+inputs:
+  modules:
+    description: "Required. Multiline string. List of the modules to install. Format: <moduleName>:<version>"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Register PS repository
+      shell: pwsh
+      run: |
+        $psRepository = Get-PSRepository -Name PSGallery -ErrorAction Ignore
+        if (!$psRepository -or !$psRepository.Trusted) {
+            Unregister-PSRepository PSGallery -ErrorAction Ignore
+            Register-PSRepository -Default -InstallationPolicy Trusted
+        }
+
+    - name: Parse PowerShell Modules versions
+      id: parse-psmodules
+      shell: pwsh
+      env:
+        moduleversions: ${{ inputs.modules }}
+      run: |
+        $versionsString = ($env:moduleversions -split "`n" -replace " " | Sort-Object -Unique | Where-Object { $_ }) -join ','
+        Write-Output "moduleversions=$($versionsString)" >> $env:GITHUB_OUTPUT
+
+    - name: Install and cache PowerShell modules
+      uses: potatoqualitee/psmodulecache@v6.2
+      with:
+        modules-to-cache: ${{ steps.parse-psmodules.outputs.moduleversions }}
