@@ -10,7 +10,7 @@ Use this as a step in an existing workflow
 # ...
 steps:
   - name: Install PS Modules
-    uses: climpr/install-psmodules@v0
+    uses: climpr/install-psmodules@v1
     with:
       modules: |
         Az.Accounts:2.17.0
