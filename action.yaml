@@ -28,6 +28,6 @@ runs:
         Write-Output "moduleversions=$($versionsString)" >> $env:GITHUB_OUTPUT
 
     - name: Install and cache PowerShell modules
-      uses: potatoqualitee/psmodulecache@v6.2
+      uses: potatoqualitee/psmodulecache@v6.2.1
       with:
         modules-to-cache: ${{ steps.parse-psmodules.outputs.moduleversions }}
