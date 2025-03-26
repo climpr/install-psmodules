@@ -37,3 +37,4 @@ runs:
       uses: potatoqualitee/psmodulecache@v6.2.1
       with:
         modules-to-cache: ${{ steps.parse-psmodules.outputs.moduleversions }}
+        updatable: true
