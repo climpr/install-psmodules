@@ -24,7 +24,13 @@ runs:
       env:
         moduleversions: ${{ inputs.modules }}
       run: |
-        $versionsString = ($env:moduleversions -split "`n" -replace " " | Sort-Object -Unique | Where-Object { $_ }) -join ','
+        $versionsString = $env:$moduleversions -split "`n"
+        | ForEach-Object { $_ -replace " ", "" -replace ":latest$", "::" }
+        | ForEach-Object { if ($_ -notmatch ":") { "$_::" } else { $_ } }
+        | Sort-Object -Unique
+        | Where-Object { $_ }
+        | Join-String -Separator ','
+
         Write-Output "moduleversions=$($versionsString)" >> $env:GITHUB_OUTPUT
 
     - name: Install and cache PowerShell modules
