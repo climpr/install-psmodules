@@ -24,10 +24,17 @@ runs:
       env:
         moduleversions: ${{ inputs.modules }}
       run: |
-        $versionsString = ($env:moduleversions -split "`n" -replace " " | Sort-Object -Unique | Where-Object { $_ }) -join ','
+        $versionsString = $env:moduleversions -split "`n"
+        | ForEach-Object { $_ -replace " ", "" -replace ":latest$", "::" }
+        | Where-Object { $_ }
+        | ForEach-Object { if ($_ -notmatch ":") { "$_::" } else { $_ } }
+        | Sort-Object -Unique
+        | Join-String -Separator ','
+
         Write-Output "moduleversions=$($versionsString)" >> $env:GITHUB_OUTPUT
 
     - name: Install and cache PowerShell modules
       uses: potatoqualitee/psmodulecache@v6.2.1
       with:
         modules-to-cache: ${{ steps.parse-psmodules.outputs.moduleversions }}
+        updatable: true
