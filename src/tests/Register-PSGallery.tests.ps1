@@ -1,31 +1,48 @@
-BeforeAll {
-    Import-Module $PSScriptRoot/../InstallPSModules.psm1 -Force
-}
 
 Describe "Register-PSGallery" {
-    It "Should register PSGallery as trusted when Get-PSRepository returns null" {
-        InModuleScope InstallPSModules {
-            Mock -CommandName Get-PSRepository -MockWith { $null }
-            Mock -CommandName Unregister-PSRepository
-            Mock -CommandName Register-PSRepository
+    $currentPSRepository = $null
 
-            Register-PSGallery
+    BeforeAll {
+        Import-Module $PSScriptRoot/../InstallPSModules.psm1 -Force
+        $script:currentPSRepository = Get-PSRepository -Name PSGallery -ErrorAction Ignore
+    }
 
-            Should -Invoke Get-PSRepository -Times 1 -Exactly
-            Should -Invoke Unregister-PSRepository -Times 1 -Exactly
-            Should -Invoke Register-PSRepository -Times 1 -Exactly
+    BeforeEach {
+        if (Get-PSRepository -Name PSGallery -ErrorAction Ignore) {
+            Unregister-PSRepository -Name PSGallery
         }
     }
-    
-    # It "Should register PSGallery as trusted when not trusted from before" {
-    #     InModuleScope InstallPSModules {
-    #         Mock -CommandName Get-PSRepository -MockWith { @{} }
-    #         Mock -CommandName Unregister-PSRepository
-            
-    #         Register-PSGallery
-            
-    #         Should -Invoke Get-PSRepository -Times 1 -Exactly -ModuleName InstallPSModules
-    #         Should -Invoke Unregister-PSRepository -Times 1 -Exactly -ModuleName InstallPSModules
-    #     }
-    # }
+
+    AfterEach {
+        if ($currentPSRepository) {
+            Unregister-PSRepository -Name PSGallery
+            Register-PSRepository -Default -InstallationPolicy $currentPSRepository.InstallationPolicy
+        }
+        else {
+            Unregister-PSRepository -Name PSGallery
+        }
+    }
+
+    It "Should register PSGallery as trusted when Get-PSRepository is trusted" {
+        Register-PSRepository -Default -InstallationPolicy Trusted
+        Register-PSGallery
+        $psRepository = Get-PSRepository -Name PSGallery
+        $psRepository | Should -Not -BeNullOrEmpty
+        $psRepository.Trusted | Should -BeTrue
+    }
+
+    It "Should register PSGallery as trusted when Get-PSRepository is not trusted" {
+        Register-PSRepository -Default -InstallationPolicy Untrusted
+        Register-PSGallery
+        $psRepository = Get-PSRepository -Name PSGallery
+        $psRepository | Should -Not -BeNullOrEmpty
+        $psRepository.Trusted | Should -BeTrue
+    }
+
+    It "Should register PSGallery as trusted when Get-PSRepository returns null" {
+        Register-PSGallery
+        $psRepository = Get-PSRepository -Name PSGallery
+        $psRepository | Should -Not -BeNullOrEmpty
+        $psRepository.Trusted | Should -BeTrue
+    }
 }
