@@ -26,15 +26,15 @@ runs:
         #* Register PS Gallery
         Register-PSGallery
 
-    - name: Parse PS Modules input
-      id: parse-psmodules
+    - name: Format PS Modules input
+      id: format-psmodulesinput
       shell: pwsh
       env:
         modules: ${{ inputs.modules }}
         actionPath: ${{ github.action_path }}
         debug: ${{ runner.debug }}
       run: |
-        #* Parse-PSModules
+        #* Format-PSModulesInput
 
         #* Set debug preference from runner configuration
         $DebugPreference = [bool]$env:debug ? "Continue" : "SilentlyContinue"
@@ -42,14 +42,14 @@ runs:
         #* Import module
         Import-Module "$($env:actionPath)/src/InstallPSModules.psm1" -Force
 
-        #* Parse PS Modules input
-        $modules = Parse-PSModules -Modules $env:modules
+        #* Format PS Modules input
+        $modulesString = Format-PSModulesInput -InputString $env:modules
 
-        #* Output module versions
-        Write-Output "moduleversions=$($versionsString)" >> $env:GITHUB_OUTPUT
+        #* Output modules string
+        Write-Output "modules-string=$($modulesString)" >> $env:GITHUB_OUTPUT
 
     - name: Install and cache PowerShell modules
       uses: potatoqualitee/psmodulecache@v6.2.1
       with:
-        modules-to-cache: ${{ steps.parse-psmodules.outputs.moduleversions }}
+        modules-to-cache: ${{ steps.format-psmodulesinput.outputs.modules-string }}
         updatable: true

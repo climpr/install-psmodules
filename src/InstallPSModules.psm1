@@ -8,13 +8,13 @@ function Register-PSGallery {
     }
 }
 
-function Format-PSModuleInput {
+function Format-PSModulesInput {
     [CmdletBinding()]
     param (
-        [string]$Modules
+        [string]$InputString
     )
 
-    $modulesString = $Modules -split "`n"
+    $modulesString = $InputString -split "`n"
     | ForEach-Object { $_ -replace " ", "" -replace ":latest$", "::" }
     | Where-Object { $_ }
     | ForEach-Object { if ($_ -notmatch ":") { "$_::" } else { $_ } }

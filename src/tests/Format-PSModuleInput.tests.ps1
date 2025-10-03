@@ -2,7 +2,7 @@ BeforeAll {
     Import-Module $PSScriptRoot/../InstallPSModules.psm1 -Force
 }
 
-Describe "Format-PSModuleInput" {
+Describe "Format-PSModulesInput" {
     It "Should handle <scenario> correctly" -TestCases @(
         @{
             scenario = "Empty string input"
@@ -37,7 +37,7 @@ Az.Storage
     ) {
         param($modules, $expected)
 
-        $result = Format-PSModuleInput -Modules $modules
+        $result = Format-PSModulesInput -InputString $modules
 
         $result | Should -BeExactly $expected
     }
