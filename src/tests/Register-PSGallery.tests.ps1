@@ -14,12 +14,9 @@ Describe "Register-PSGallery" {
     }
 
     AfterEach {
+        Unregister-PSRepository -Name PSGallery
         if ($currentPSRepository) {
-            Unregister-PSRepository -Name PSGallery
             Register-PSRepository -Default -InstallationPolicy $currentPSRepository.InstallationPolicy
-        }
-        else {
-            Unregister-PSRepository -Name PSGallery
         }
     }
 
