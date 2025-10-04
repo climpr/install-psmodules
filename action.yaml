@@ -1,5 +1,5 @@
-name: "Install PS Modules"
-description: "Installs PowerShell modules and versions. Uses caching to increase reliability"
+name: Install PS Modules
+description: Installs PowerShell modules and versions. Uses caching to increase reliability
 
 inputs:
   modules:
@@ -7,34 +7,49 @@ inputs:
     required: true
 
 runs:
-  using: "composite"
+  using: composite
   steps:
-    - name: Register PS repository
-      shell: pwsh
-      run: |
-        $psRepository = Get-PSRepository -Name PSGallery -ErrorAction Ignore
-        if (!$psRepository -or !$psRepository.Trusted) {
-            Unregister-PSRepository PSGallery -ErrorAction Ignore
-            Register-PSRepository -Default -InstallationPolicy Trusted
-        }
-
-    - name: Parse PowerShell Modules versions
-      id: parse-psmodules
+    - name: Register-PSGallery
       shell: pwsh
       env:
-        moduleversions: ${{ inputs.modules }}
+        actionPath: ${{ github.action_path }}
+        debug: ${{ runner.debug }}
       run: |
-        $versionsString = $env:moduleversions -split "`n"
-        | ForEach-Object { $_ -replace " ", "" -replace ":latest$", "::" }
-        | Where-Object { $_ }
-        | ForEach-Object { if ($_ -notmatch ":") { "$_::" } else { $_ } }
-        | Sort-Object -Unique
-        | Join-String -Separator ','
+        #* Register-PSGallery
 
-        Write-Output "moduleversions=$($versionsString)" >> $env:GITHUB_OUTPUT
+        #* Set debug preference from runner configuration
+        $DebugPreference = [bool]$env:debug ? "Continue" : "SilentlyContinue"
+
+        #* Import module
+        Import-Module "$($env:actionPath)/src/InstallPSModules.psm1" -Force
+
+        #* Register PS Gallery
+        Register-PSGallery
+
+    - name: Format PS Modules input
+      id: format-psmodulesinput
+      shell: pwsh
+      env:
+        modules: ${{ inputs.modules }}
+        actionPath: ${{ github.action_path }}
+        debug: ${{ runner.debug }}
+      run: |
+        #* Format-PSModulesInput
+
+        #* Set debug preference from runner configuration
+        $DebugPreference = [bool]$env:debug ? "Continue" : "SilentlyContinue"
+
+        #* Import module
+        Import-Module "$($env:actionPath)/src/InstallPSModules.psm1" -Force
+
+        #* Format PS Modules input
+        $modulesString = Format-PSModulesInput -InputString $env:modules
+
+        #* Output modules string
+        Write-Output "modules-string=$($modulesString)" >> $env:GITHUB_OUTPUT
 
     - name: Install and cache PowerShell modules
       uses: potatoqualitee/psmodulecache@v6.2.1
       with:
-        modules-to-cache: ${{ steps.parse-psmodules.outputs.moduleversions }}
+        modules-to-cache: ${{ steps.format-psmodulesinput.outputs.modules-string }}
         updatable: true
