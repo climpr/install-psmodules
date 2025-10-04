@@ -45,11 +45,15 @@ runs:
         #* Format PS Modules input
         $modulesString = Format-PSModulesInput -InputString $env:modules
 
+        #* Is updatable
+        $isUpdatable = $modulesString -match '::'
+
         #* Output modules string
         Write-Output "modules-string=$($modulesString)" >> $env:GITHUB_OUTPUT
+        Write-Output "updatable=$($isUpdatable.ToString().ToLower())" >> $env:GITHUB_OUTPUT
 
     - name: Install and cache PowerShell modules
       uses: potatoqualitee/psmodulecache@v6.2.1
       with:
-        modules-to-cache: "${{ steps.format-psmodulesinput.outputs.modules-string }}"
-        updatable: true
+        modules-to-cache: ${{ steps.format-psmodulesinput.outputs.modules-string }}
+        updatable: ${{ steps.format-psmodulesinput.outputs.updatable }}
